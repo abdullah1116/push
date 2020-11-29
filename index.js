@@ -4,24 +4,23 @@ const http = require('http');
 const fs = require('fs');
 
 var port = 0003;
-const filePath = process.argv[3]
+const fileName = process.argv[2]
 
 const serve = (count = 0) => {
-
     var server = http.createServer(function (req, res) {
-        console.log('connected')
+        logHandler.client_connected();
         try {
-
-            fs.readFile(filePath, function (err, data) {
-                res.setHeader('Content-disposition', `attachment; filename=${filePath}`);
-                // res.writeHead(200, { 'Content-Type': 'text' });
-                res.write(data);
-                return res.end();
+            res.setHeader('Content-disposition', `attachment; filename=${fileName}`);
+            var readStream = fs.createReadStream(filePath);
+            readStream.on('open', () => {
+                readStream.pipe(res);
+            });
+            readStream.on('error', (err) => {
+                logHandler.server_file_error(res);
             });
         }
         catch (e) {
-            res.end('file error')
-            console.error("file error")
+            logHandler.server_file_error(res);
         }
     })
 
@@ -29,13 +28,15 @@ const serve = (count = 0) => {
     server.on('listening', err => printQr(server))
 
     server.listen(port);
+
     server.on('listening', err => printQr())
+
     function portUp(count) {
         if (port >= 10) {
-            console.log('port error');
+            logHandler.port_error()
         } else {
             port++;
-            console.log('portUp', port)
+            logHandler.port_Up(port)
             serve(+count + 1);
         }
     }
@@ -63,15 +64,41 @@ const ipv4Array = () => {
     }
     return ipv4;
 }
+const logHandler = {
+    file_not_found: (fileName, filePath = '') => {
+        console.warn(`file not found: ${fileName}: ${filePath}`)
+        process.exit(1)
+        return;
+    },
+    server_file_error: (res) => {
+        res.end('file error')
+        console.error("file error")
+    },
+    port_error: () => {
+        console.log('port error');
+    },
+    port_Up: (port) => {
+        console.log('portUp', port)
+    },
+    client_connected: () => {
+        console.log('Client connected');
+    }
 
-//
-if (filePath) {
-    console.log(filePath);
-    serve(port);
-} else {
-    console.warn('file not found')
 }
 
+//
 
-
-
+if (fileName) {
+    filePath = fileName;
+    if (!fs.existsSync(filePath)) {
+        filePath = `${process.cwd()}\\${fileName}`;
+        if (!fs.existsSync(filePath)) {
+            logHandler.file_not_found(fileName, filePath);
+            return;
+        }
+    }
+    console.log(fileName);
+    serve(port);
+} else {
+    logHandler.file_not_found(fileName);
+}
