@@ -25,7 +25,7 @@ const serve = (count = 0) => {
     })
 
     server.on("error", err => portUp(count));
-    server.on('listening', err => printQr(server))
+    server.on('listening', err => printQr())
 
     server.listen(port);
 
@@ -42,10 +42,10 @@ const serve = (count = 0) => {
     }
 }
 
-const printQr = (server) => {
+const printQr = () => {
     ipv4Array().forEach(ip => {
         const netPath = `http://${ip}:${port}`
-        console.log('path', netPath);
+        logHandler.path_qr(netPath);
         qrcode.generate(netPath, { small: true });
     })
 
@@ -81,8 +81,14 @@ const logHandler = {
         console.log('portUp', port)
     },
     client_connected: () => {
-        console.log('Client connected');
-    }
+        console.log('client connected');
+    },
+    path_qr: (netPath) => {
+        console.log('url: ', netPath);
+    },
+    fileName: (fileName) => {
+        console.log(fileName);
+    },
 
 }
 
@@ -97,7 +103,7 @@ if (fileName) {
             return;
         }
     }
-    console.log(fileName);
+    logHandler.file_name(fileName);
     serve(port);
 } else {
     logHandler.file_not_found(fileName);
