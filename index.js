@@ -86,7 +86,7 @@ const logHandler = {
     path_qr: (netPath) => {
         console.log('url: ', netPath);
     },
-    fileName: (fileName) => {
+    file_name: (fileName) => {
         console.log(fileName);
     },
 
